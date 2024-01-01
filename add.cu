@@ -1,8 +1,10 @@
 #include <iostream>
 #include <math.h>
 #include <chrono>
-
 #include <cuda_runtime.h>
+
+#define CPU_LIMIT 1000000000
+#define MAX_THREADS 1024
 
 void listCudaDevices() {
     int deviceCount;
@@ -38,7 +40,7 @@ void add_cuda(int *a, int *b, int *c, int n)
 
 void add_cpu(int *a, int *b, int *c, int n)
 {
-  if(n>=1000000000){
+  if(n>=CPU_LIMIT) {
     return;
   }
   for (int i = 0; i < n; i++) {
@@ -77,7 +79,7 @@ int main(void)
     cudaMemcpy(d_b, b, size, cudaMemcpyHostToDevice);
 
     auto start_gpu = std::chrono::high_resolution_clock::now();
-    add_cuda<<<ceil(n/512.0), 512>>>(d_a, d_b, d_c, n);
+    add_cuda<<<ceil(n/(float)MAX_THREADS), MAX_THREADS>>>(d_a, d_b, d_c, n);
     cudaDeviceSynchronize();
     auto stop_gpu = std::chrono::high_resolution_clock::now();
     duration_ms = stop_gpu - start_gpu;
